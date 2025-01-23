@@ -10,7 +10,7 @@
 
     <header>
         <h1>Dashboard de Predicción de Actitudes hacia la Inmigración</h1>
-        <p>Inspirado en Google Analytics</p>
+        <p>Medida de emergencia en contra de los discursos de odio</p>
     </header>
 
     <nav>
@@ -64,6 +64,7 @@
     <script>
         const form = document.getElementById('prediction-form');
         const resultDiv = document.getElementById('result');
+        const chartContainer = document.getElementById('chart-container');
 
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
@@ -88,6 +89,35 @@
 
                 if (result.prediction !== undefined) {
                     resultDiv.innerText = `Predicción: ${result.prediction}`;
+
+                    // Mostrar datos valiosos en la sección de visualizaciones
+                    const shapValues = result.shap_values;
+                    chartContainer.innerHTML = ''; // Limpiar el contenedor
+
+                    if (result.prediction === 'Permisivo') {
+                        // Mostrar datos para la clase "Permisivo"
+                        const permisivoData = `
+                        <h3>Datos para la clase "Permisivo":</h3>
+                        <p>La variable más influyente es: ${getMaxShapVariable(shapValues)}</p>
+                        <p>Su valor SHAP es: ${getMaxShapValue(shapValues).toFixed(2)}</p>
+                        `;
+                        chartContainer.innerHTML = permisivoData;
+                    } else if (result.prediction === 'Neutral') {
+                        // Mostrar datos para la clase "Neutral"
+                        const neutralData = `
+                        <h3>Datos para la clase "Neutral":</h3>
+                        <p>Las variables más influyentes son: ${getTopShapVariables(shapValues, 2).join(', ')}</p>
+                        `;
+                        chartContainer.innerHTML = neutralData;
+                    } else if (result.prediction === 'Restrictivo') {
+                        // Mostrar datos para la clase "Restrictivo"
+                        const restrictivoData = `
+                        <h3>Datos para la clase "Restrictivo":</h3>
+                        <p>La variable menos influyente es: ${getMinShapVariable(shapValues)}</p>
+                        <p>Su valor SHAP es: ${getMinShapValue(shapValues).toFixed(2)}</p>
+                        `;
+                        chartContainer.innerHTML = restrictivoData;
+                    }
                 } else if (result.error) {
                     resultDiv.innerText = `Error: ${result.error}`;
                 } else {
@@ -98,6 +128,56 @@
                 resultDiv.innerText = `Error: ${error}`;
             }
         });
+
+        function getMaxShapVariable(shapValues) {
+            let maxVariable = null;
+            let maxValue = -Infinity;
+            for (const variable in shapValues) {
+                if (Math.abs(shapValues[variable]) > maxValue) {
+                    maxValue = Math.abs(shapValues[variable]);
+                    maxVariable = variable;
+                }
+            }
+            return maxVariable;
+        }
+
+        function getMaxShapValue(shapValues) {
+            let maxValue = -Infinity;
+            for (const variable in shapValues) {
+                if (shapValues[variable] > maxValue) {
+                    maxValue = shapValues[variable];
+                }
+            }
+            return maxValue;
+        }
+
+        function getTopShapVariables(shapValues, n) {
+            const sortedVariables = Object.entries(shapValues)
+                .sort(([, valueA], [, valueB]) => Math.abs(valueB) - Math.abs(valueA));
+            return sortedVariables.slice(0, n).map(([variable]) => variable);
+        }
+
+        function getMinShapVariable(shapValues) {
+            let minVariable = null;
+            let minValue = Infinity;
+            for (const variable in shapValues) {
+                if (Math.abs(shapValues[variable]) < minValue) {
+                    minValue = Math.abs(shapValues[variable]);
+                    minVariable = variable;
+                }
+            }
+            return minVariable;
+        }
+
+        function getMinShapValue(shapValues) {
+            let minValue = Infinity;
+            for (const variable in shapValues) {
+                if (shapValues[variable] < minValue) {
+                    minValue = shapValues[variable];
+                }
+            }
+            return minValue;
+        }
     </script>
 
 </body>

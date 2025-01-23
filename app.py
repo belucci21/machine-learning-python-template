@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, render_template
 import pickle
 import os
 import pandas as pd
+import shap
 
 app = Flask(__name__)
 
@@ -23,10 +24,21 @@ def home():
 def predict():
     try:
         data = request.get_json()
-        input_data = pd.DataFrame([data], columns=model.feature_names_in_)
-
+        input_data = pd.DataFrame([data])  
         prediction = model.predict(input_data)[0]
-        return jsonify({"prediction": prediction})
+
+        # Calcular valores SHAP para la instancia
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(input_data)
+
+        # Obtener los valores SHAP para la clase predicha
+        class_index = list(model.classes_).index(prediction)
+        shap_values_for_prediction = shap_values[class_index][0]
+
+        # Crear un diccionario con los valores SHAP y los nombres de las variables
+        shap_dict = dict(zip(model.feature_names_in_, shap_values_for_prediction))
+
+        return jsonify({"prediction": prediction, "shap_values": shap_dict})
 
     except Exception as e:
         return jsonify({"error": str(e)})
