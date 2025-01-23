@@ -3,6 +3,7 @@ import pickle
 import os
 import pandas as pd
 import shap
+import numpy as np
 
 app = Flask(__name__)
 
