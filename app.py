@@ -32,9 +32,13 @@ def predict():
         explainer = shap.TreeExplainer(model)
         shap_values = explainer.shap_values(input_data)
 
+        # Depuración para ver qué contiene shap_values
+        print("Tipo de shap_values:", type(shap_values))
+        print("Contenido de shap_values:", shap_values)
+
         # Obtener los valores SHAP para la clase predicha
         class_index = list(model.classes_).index(prediction)
-        shap_values_for_prediction = shap_values[class_index][0]
+        shap_values_for_prediction = shap_values[0][:, class_index]
 
         # Crear un diccionario con los valores SHAP y los nombres de las variables
         shap_dict = dict(zip(model.feature_names_in_, shap_values_for_prediction))
@@ -42,7 +46,9 @@ def predict():
         return jsonify({"prediction": prediction, "shap_values": shap_dict})
 
     except Exception as e:
+        print("Error en predict():", str(e))
         return jsonify({"error": str(e)})
+
 
 if __name__ == "__main__":
     print("Iniciando Flask en el puerto 5000...")
