@@ -1,32 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Predicción con Random Forest</title>
-    <script>
-        async function sendPrediction() {
-            let inputData = {
-                "feature_1": 6.0,
-                "feature_2": 5.0,
-                "feature_3": 3.0,
-                "feature_4": 4.0,
-                "feature_5": 2.0,
-                "feature_6": 1.0
-            };
-
-            let response = await fetch("/predict", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(inputData)
-            });
-
-            let result = await response.json();
-            document.getElementById("result").innerText = "Predicción: " + result.prediction;
-        }
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Predicción de Actitudes hacia la Inmigración</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Predicción con Random Forest</h1>
-    <button onclick="sendPrediction()">Realizar Predicción</button>
-    <p id="result"></p>
+
+    <header>
+        <h1>Dashboard de Predicción de Actitudes hacia la Inmigración</h1>
+        <p>Inspirado en Google Analytics</p>
+    </header>
+
+    <nav>
+        <ul>
+            <li><a href="#">Resumen</a></li>
+            <li><a href="#">Predicciones</a></li>
+            <li><a href="#">Visualizaciones</a></li>
+            <li><a href="#">Acerca de</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        <section id="prediccion">
+            <h2>Realizar una Predicción</h2>
+            <form id="prediction-form">
+                <label for="nwspol">Tiempo dedicado a noticias políticas (minutos):</label>
+                <input type="number" id="nwspol" name="nwspol" min="0" required><br><br>
+
+                <label for="polintr">Interés en la política (1=Muy interesado, 4=No interesado):</label>
+                <input type="number" id="polintr" name="polintr" min="1" max="4" required><br><br>
+
+                <label for="psppipla">Percepción de influencia política (1=Ninguna, 5=Mucha):</label>
+                <input type="number" id="psppipla" name="psppipla" min="1" max="5" required><br><br>
+
+                <label for="cptppola">Confianza en la participación política (1=Ninguna, 5=Mucha):</label>
+                <input type="number" id="cptppola" name="cptppola" min="1" max="5" required><br><br>
+
+                <label for="imsmetn">Actitudes hacia inmigrantes del mismo grupo étnico (1=Permitir muchos, 4=No permitir ninguno):</label>
+                <input type="number" id="imsmetn" name="imsmetn" min="1" max="4" required><br><br>
+
+                <label for="imdfetn">Actitudes hacia inmigrantes de diferentes grupos étnicos (1=Permitir muchos, 4=No permitir ninguno):</label>
+                <input type="number" id="imdfetn" name="imdfetn" min="1" max="4" required><br><br>
+
+                <button type="submit">Predecir</button>
+            </form>
+
+            <div id="result"></div>
+        </section>
+
+        <section id="visualizaciones">
+            <h2>Visualizaciones</h2>
+            <div id="chart-container">
+                </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Proyecto de Data Science</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById('prediction-form');
+        const resultDiv = document.getElementById('result');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const inputData = {
+                nwspol: parseFloat(form.nwspol.value),
+                polintr: parseFloat(form.polintr.value),
+                psppipla: parseFloat(form.psppipla.value),
+                cptppola: parseFloat(form.cptppola.value),
+                imsmetn: parseFloat(form.imsmetn.value),
+                imdfetn: parseFloat(form.imdfetn.value)
+            };
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(inputData)
+                });
+
+                const result = await response.json();
+
+                if (result.prediction !== undefined) {
+                    resultDiv.innerText = `Predicción: ${result.prediction}`;
+                } else if (result.error) {
+                    resultDiv.innerText = `Error: ${result.error}`;
+                } else {
+                    resultDiv.innerText = 'Error desconocido.';
+                }
+
+            } catch (error) {
+                resultDiv.innerText = `Error: ${error}`;
+            }
+        });
+    </script>
+
 </body>
 </html>

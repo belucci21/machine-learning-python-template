@@ -1,36 +1,36 @@
 from flask import Flask, request, jsonify, render_template
 import pickle
+import os
 import pandas as pd
-import numpy as np
 
-# Inicializar Flask
 app = Flask(__name__)
 
 # Cargar el modelo guardado
-model_path = "/workspace/machine-learning-python-template/models/best_rf_model.pkl"
-with open(model_path, "rb") as f:
-    model = pickle.load(f)
+model_path = os.path.join(os.getcwd(), "models", "best_rf_model.pkl")
 
-# Ruta principal para la página web
+try:
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+    print("Modelo cargado correctamente.")
+except FileNotFoundError:
+    print(f"Error: No se encontró el modelo en {model_path}")
+
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Ruta para hacer predicciones
 @app.route("/predict", methods=["POST"])
 def predict():
     try:
-        data = request.get_json()  # Obtener datos en formato JSON
-        input_data = pd.DataFrame([data])  # Convertir a DataFrame
+        data = request.get_json()
+        input_data = pd.DataFrame([data], columns=model.feature_names_in_)
 
-        # Realizar predicción
         prediction = model.predict(input_data)[0]
-
-        return jsonify({"prediction": int(prediction)})
+        return jsonify({"prediction": prediction})
 
     except Exception as e:
         return jsonify({"error": str(e)})
 
-# Ejecutar la aplicación
 if __name__ == "__main__":
+    print("Iniciando Flask en el puerto 5000...")
     app.run(host="0.0.0.0", port=5000, debug=True)
